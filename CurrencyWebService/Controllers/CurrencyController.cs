@@ -1,10 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CurrencyWebService.Services.Implementations;
+using CurrencyWebService.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CurrencyWebService.Controllers
 {
 	[ApiController]
 	public class CurrencyController : ControllerBase
 	{
+		private readonly ICurrencyService _currencyService;
+		public CurrencyController(ICurrencyService currencyService) 
+		{
+			_currencyService = currencyService;
+		}
+
 		[HttpGet]
 		[Route("currencies")]
 		public IEnumerable<string> Get()
