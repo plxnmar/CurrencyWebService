@@ -1,9 +1,13 @@
-﻿namespace CurrencyWebService.Services.Interfaces
+﻿using CurrencyWebService.Models;
+
+namespace CurrencyWebService.Services.Interfaces
 {
-	public interface CurrencyInterface
+	public interface ICurrencyService
 	{
-		IEnumerable<string> GetAll();
-		string Get(int id);
+		Task<List<Currency>> GetPaginateCurrencies(int pageNumber, int pageSize);
+		Task<Currency> GetCurrencyById(string id);
+		Task<IEnumerable<Currency>> GetAllCurrencies();
+		Task<List<Currency>> GetAndCacheCurrencies();
 
 	}
 }
