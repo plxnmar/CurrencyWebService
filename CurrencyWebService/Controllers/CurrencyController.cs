@@ -1,5 +1,4 @@
 ﻿using CurrencyWebService.Models;
-using CurrencyWebService.Services.Implementations;
 using CurrencyWebService.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

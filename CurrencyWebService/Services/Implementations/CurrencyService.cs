@@ -1,10 +1,6 @@
 ﻿using CurrencyWebService.Models;
 using CurrencyWebService.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
-using System;
-using System.Net.Http;
-using System.Reflection.Metadata;
-using System.Text.Json;
 
 namespace CurrencyWebService.Services.Implementations
 {

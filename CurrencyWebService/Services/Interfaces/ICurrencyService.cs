@@ -8,6 +8,5 @@ namespace CurrencyWebService.Services.Interfaces
 		Task<ResponseObject<Currency>> GetCurrencyById(string id);
 		Task<ResponseObject<IEnumerable<Currency>>> GetAllCurrencies();
 		Task<ResponseObject<IEnumerable<Currency>>> GetAndCacheCurrencies();
-
 	}
 }
