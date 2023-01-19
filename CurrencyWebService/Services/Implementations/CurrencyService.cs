@@ -21,64 +21,163 @@ namespace CurrencyWebService.Services.Implementations
 			_httpClientFactory = httpClientFactory;
 		}
 
-		public async Task<Currency> GetCurrencyById(string id)
+		public async Task<ResponseObject<Currency>> GetCurrencyById(string id)
 		{
-			var list = await GetAllCurrencies();
-			var cur = list.FirstOrDefault(x => x.ID == id);
-			return cur;
+			var response = await GetAllCurrencies();
+
+			if (response.Success == true)
+			{
+				var currencies = response.Data;
+				var currencyById = currencies.FirstOrDefault(x => x.ID == id);
+
+				if (currencyById == null)
+				{
+					return new ResponseObject<Currency>
+					{
+						StatusCode = 404,
+						Success = false,
+						ErrorMessage = "Валюта с данным идентификатором не найдена"
+					};
+				}
+				else
+				{
+					return new ResponseObject<Currency>
+					{
+						StatusCode = response.StatusCode,
+						Success = true,
+						Data = currencyById
+					};
+				}
+			}
+			else
+			{
+				return new ResponseObject<Currency>
+				{
+					Success = response.Success,
+					StatusCode = response.StatusCode,
+					ErrorMessage = response.ErrorMessage
+				};
+			}
 		}
 
-		public async Task<List<Currency>> GetPaginateCurrencies(int pageNumber, int pageSize)
+		public async Task<ResponseObject<IEnumerable<Currency>>> GetPaginateCurrencies(int pageNumber, int pageSize)
 		{
-			var currencies = await GetAllCurrencies();
+			var response = await GetAllCurrencies();
 
-			currencies = currencies
-				.Skip((pageNumber - 1) * pageSize)
-				.Take(pageSize);
+			if (response.Success == true)
+			{
+				var currencies = response.Data;
 
-			return currencies.ToList();
+				currencies = currencies?
+								.Skip((pageNumber - 1) * pageSize)
+								.Take(pageSize);
+
+				return new ResponseObject<IEnumerable<Currency>>
+				{
+					Success = true,
+					StatusCode = response.StatusCode,
+					Data = currencies,
+				};
+			}
+			else
+			{
+				return new ResponseObject<IEnumerable<Currency>>
+				{
+					Success = response.Success,
+					StatusCode = response.StatusCode,
+					ErrorMessage = response.ErrorMessage
+				};
+			}
 		}
 
-		public async Task<IEnumerable<Currency>> GetAllCurrencies()
-		{	
-			// try-catch
-			//обработка ошибок и в контроллеры
-
-			_cache.TryGetValue("currenciesKey", out List<Currency> currencies);
+		public async Task<ResponseObject<IEnumerable<Currency>>> GetAllCurrencies()
+		{
+			_cache.TryGetValue("currenciesKey", out IEnumerable<Currency>? currencies);
 
 			if (currencies != null)
 			{
-				return currencies;
+				return new ResponseObject<IEnumerable<Currency>>
+				{
+					StatusCode = 200,
+					Success = true,
+					Data = currencies,
+				};
 			}
 			else
 			{
-				currencies = await GetAndCacheCurrencies();
-				return currencies;
-			}
+				var response = await GetAndCacheCurrencies();
 
+				if (response.Success == true)
+				{
+					return new ResponseObject<IEnumerable<Currency>>
+					{
+						StatusCode = 200,
+						Success = true,
+						Data = response.Data,
+					};
+				}
+				else
+				{
+					return response;
+				}
+			}
 		}
 
 
-		public async Task<List<Currency>> GetAndCacheCurrencies()
+		public async Task<ResponseObject<IEnumerable<Currency>>> GetAndCacheCurrencies()
 		{
-			var client = _httpClientFactory.CreateClient();
-			var rootObject = await client.GetFromJsonAsync<RootObject>(_url);
-
-			if (rootObject != null)
+			try
 			{
-				var currentCurrencies = rootObject.Valute.Values.ToList();
+				var client = _httpClientFactory.CreateClient();
 
-				_cache.Set("currenciesKey", currentCurrencies,
-					new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(1)));
+				var response = await client.GetAsync(_url);
 
-				return currentCurrencies;
+				if (!response.IsSuccessStatusCode)
+				{
+					return new ResponseObject<IEnumerable<Currency>>
+					{
+						StatusCode = (int)response.StatusCode,
+						Success = false,
+						ErrorMessage = $"Не удалось выполнить запрос к {_url}",
+					};
+				}
+				else
+				{
+					var rootObject = await response.Content.ReadFromJsonAsync<RootObject>();
+
+					if (rootObject != null)
+					{
+						var currentCurrencies = rootObject.Valute.Values.Cast<Currency>();
+
+						_cache.Set("currenciesKey", currentCurrencies,
+							new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(1)));
+
+						return new ResponseObject<IEnumerable<Currency>>
+						{
+							StatusCode = 200,
+							Success = true,
+							Data = currentCurrencies,
+						};
+					}
+					else
+					{
+						return new ResponseObject<IEnumerable<Currency>>
+						{
+							StatusCode = 204,
+							Success = true,
+						};
+					}
+				}
 			}
-			else
+			catch (Exception ex)
 			{
-				//TODO
-				return new List<Currency>();
+				return new ResponseObject<IEnumerable<Currency>>
+				{
+					StatusCode = 500,
+					Success = false,
+					ErrorMessage = ex.Message,
+				};
 			}
-
 		}
 	}
 }

@@ -32,9 +32,11 @@ namespace CurrencyWebService.Services.Implementations
 
 				//получаем курсы валют каждые 30 минут
 				await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-
-				//await Task.Delay(1000, stoppingToken); ?
 			}
+
+			//TODO 
+			//Прописать дату чтобы 00 30 00 30
+
 
 			//// Если нужно дождаться завершения очистки, но контролировать время, то стоит предусмотреть в контракте использование CancellationToken
 			//await someService.DoSomeCleanupAsync(cancellationToken);

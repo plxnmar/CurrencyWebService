@@ -16,17 +16,30 @@ namespace CurrencyWebService.Controllers
 
 		[HttpGet]
 		[Route("currencies")]
-		public async Task<List<Currency>> Get(int pageNumber = 1, int pageSize = 5)
+		public async Task<IActionResult> Get(int pageNumber = 1, int pageSize = 5)
 		{
-			return await _currencyService.GetPaginateCurrencies(pageNumber, pageSize);
+			var response =  await _currencyService.GetPaginateCurrencies(pageNumber, pageSize);
+			return GetStatusCode(response);
 		}
 
 		[HttpGet]
 		[Route("currency/{id}")]
-		public async Task<Currency> Get(string id)
+		public async Task<IActionResult> Get(string id)
 		{
-			return await _currencyService.GetCurrencyById(id);
+			var response = await _currencyService.GetCurrencyById(id);
+			return GetStatusCode(response);
 		}
 
+		private IActionResult GetStatusCode<T>(ResponseObject<T> response)
+		{
+			if (response.Success)
+			{
+				return StatusCode(response.StatusCode, response.Data);
+			}
+			else
+			{
+				return StatusCode(response.StatusCode, response.ErrorMessage);
+			}
+		}
 	}
 }
