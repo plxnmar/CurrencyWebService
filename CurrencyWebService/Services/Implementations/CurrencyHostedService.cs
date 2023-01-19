@@ -22,8 +22,11 @@ namespace CurrencyWebService.Services.Implementations
 			{
 				try
 				{
-					//получаем и кэшируем актуальные данные
-					await _currencyService.GetAndCacheCurrencies();
+					//получаем актуальные данные из json
+					var currentCurrencies = await _currencyService.GetFromURICurrencies();
+
+					//кэшируем данные
+					 _currencyService.CacheCurrencies(currentCurrencies.Data);
 
 					_logger.LogInformation($"Курс валют обновлен в {DateTimeOffset.Now}");
 				}

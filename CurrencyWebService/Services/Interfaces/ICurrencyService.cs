@@ -6,7 +6,8 @@ namespace CurrencyWebService.Services.Interfaces
 	{
 		Task<ResponseObject<IEnumerable<Currency>>> GetPaginateCurrencies(int pageNumber, int pageSize);
 		Task<ResponseObject<Currency>> GetCurrencyById(string id);
-		Task<ResponseObject<IEnumerable<Currency>>> GetAllCurrencies();
-		Task<ResponseObject<IEnumerable<Currency>>> GetAndCacheCurrencies();
+		Task<ResponseObject<IEnumerable<Currency>>> GetFromCacheCurrencies();
+		Task<ResponseObject<IEnumerable<Currency>>> GetFromURICurrencies();
+		void CacheCurrencies(IEnumerable<Currency> currentCurrencies);
 	}
 }

@@ -22,7 +22,7 @@ namespace CurrencyWebService.Services.Implementations
 
 		public async Task<ResponseObject<Currency>> GetCurrencyById(string id)
 		{
-			var response = await GetAllCurrencies();
+			var response = await GetFromCacheCurrencies();
 
 			if (response.Success == true)
 			{
@@ -61,7 +61,7 @@ namespace CurrencyWebService.Services.Implementations
 
 		public async Task<ResponseObject<IEnumerable<Currency>>> GetPaginateCurrencies(int pageNumber, int pageSize)
 		{
-			var response = await GetAllCurrencies();
+			var response = await GetFromCacheCurrencies();
 
 			if (response.Success == true)
 			{
@@ -80,16 +80,11 @@ namespace CurrencyWebService.Services.Implementations
 			}
 			else
 			{
-				return new ResponseObject<IEnumerable<Currency>>
-				{
-					Success = response.Success,
-					StatusCode = response.StatusCode,
-					ErrorMessage = response.ErrorMessage
-				};
+				return response;
 			}
 		}
 
-		public async Task<ResponseObject<IEnumerable<Currency>>> GetAllCurrencies()
+		public async Task<ResponseObject<IEnumerable<Currency>>> GetFromCacheCurrencies()
 		{
 			_cache.TryGetValue("currenciesKey", out IEnumerable<Currency>? currencies);
 
@@ -104,26 +99,22 @@ namespace CurrencyWebService.Services.Implementations
 			}
 			else
 			{
-				var response = await GetAndCacheCurrencies();
-
-				if (response.Success == true)
-				{
-					return new ResponseObject<IEnumerable<Currency>>
-					{
-						StatusCode = 200,
-						Success = true,
-						Data = response.Data,
-					};
-				}
-				else
-				{
-					return response;
-				}
+				//если в кэше нет данных получаем данные из json
+				var response = await GetFromURICurrencies();
+				return response;
 			}
 		}
 
 
-		public async Task<ResponseObject<IEnumerable<Currency>>> GetAndCacheCurrencies()
+		public void CacheCurrencies(IEnumerable<Currency> currentCurrencies)
+		{
+			_cache.Set("currenciesKey", currentCurrencies,
+				new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(1)));
+
+			_logger.LogInformation("Данные валют обновлены в кэше");
+		}
+
+		public async Task<ResponseObject<IEnumerable<Currency>>> GetFromURICurrencies()
 		{
 			try
 			{
@@ -147,11 +138,6 @@ namespace CurrencyWebService.Services.Implementations
 					if (rootObject != null)
 					{
 						var currentCurrencies = rootObject.Valute.Values.Cast<Currency>();
-
-						_cache.Set("currenciesKey", currentCurrencies,
-							new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(1)));
-
-						_logger.LogInformation("Данные валют обновлены в кэше");
 
 						return new ResponseObject<IEnumerable<Currency>>
 						{
