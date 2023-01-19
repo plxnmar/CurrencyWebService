@@ -10,11 +10,14 @@ namespace CurrencyWebService.Services.Implementations
 
 		private readonly IMemoryCache _cache;
 		private readonly IHttpClientFactory _httpClientFactory;
+		private readonly ILogger _logger;
 
-		public CurrencyService(IMemoryCache memoryCache, IHttpClientFactory httpClientFactory)
+		public CurrencyService(IMemoryCache memoryCache, IHttpClientFactory httpClientFactory,
+			ILogger<ICurrencyService> logger)
 		{
 			_cache = memoryCache;
 			_httpClientFactory = httpClientFactory;
+			_logger = logger;
 		}
 
 		public async Task<ResponseObject<Currency>> GetCurrencyById(string id)
@@ -147,6 +150,8 @@ namespace CurrencyWebService.Services.Implementations
 
 						_cache.Set("currenciesKey", currentCurrencies,
 							new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(1)));
+
+						_logger.LogInformation("Данные валют обновлены в кэше");
 
 						return new ResponseObject<IEnumerable<Currency>>
 						{
